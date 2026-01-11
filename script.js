@@ -1,6 +1,6 @@
 window.fbAsyncInit = function () {
   FB.init({
-    appId: 'SEU_APP_ID_AQUI',
+    appId: '1538972593992304',
     autoLogAppEvents: true,
     xfbml: false,
     version: 'v24.0',
@@ -18,20 +18,42 @@ window.fbAsyncInit = function () {
   fjs.parentNode.insertBefore(js, fjs);
 })(document, 'script', 'facebook-jssdk');
 
+window.addEventListener('message', (event) => {
+  if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
+
+  const data = JSON.parse(event.data);
+
+  if (data.type === 'WA_EMBEDDED_SIGNUP' && data.event === 'FINISH') {
+   const { waba_id, phone_number_id } = data.data;
+
+    localStorage.setItem('waba_id', waba_id);
+    localStorage.setItem('phone_number_id', phone_number_id);
+  }
+});
+
+
 function startSignup() {
   FB.login(
     function (response) {
       if (response.authResponse) {
-        console.log('SUCCESS', response);
-
-        // Você NÃO precisa fazer nada aqui agora
-        // A Meta já cria o vínculo e envia eventos pro webhook
-      } else {
-        console.log('CANCELADO');
+        const code = response.authResponse.code;
+        fetch('https://SEU_N8N_WEBHOOK_URL', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            code,
+            waba_id: localStorage.getItem('waba_id'),
+            phone_number_id: localStorage.getItem('phone_number_id'),
+        }),
+        });
       }
     },
     {
-      scope: 'business_management,whatsapp_business_management',
+      config_id: '2077835706370255',
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: { version: 'v3', setup: {} },
     }
   );
 }
+
